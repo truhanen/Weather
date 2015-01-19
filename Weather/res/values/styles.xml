@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TextStyle">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+<!--     <style name="AppTheme" parent="@style/Theme.AppCompat"> -->
+<!--         <item name="android:popupMenuStyle">@style/PopupMenu</item> -->
+<!--     </style> -->
+
+<!--     <style name="PopupMenu" parent="@android:style/Widget.PopupMenu"> -->
+<!--         <item name="android:popupBackground">@android:color/black</item> -->
+<!--     </style> -->
+
+</resources>

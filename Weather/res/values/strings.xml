@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Weather</string>
+    <string name="paivita">Päivitä</string>
+    <string name="paivitaKaikki">Päivitä kaikki</string>
+    <string name="tuorein">Tuorein</string>
+    <string name="sadealueet">Sadealueet</string>
+    <string name="historia">Historia</string>
+    <string name="varoitukset">Varoitukset</string>
+    <string name="asemat">Asemat</string>
+</resources>
