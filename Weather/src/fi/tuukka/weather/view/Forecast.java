@@ -53,7 +53,7 @@ public class Forecast {
     public void paivita() {
         String html = Station.chosen().getHtml();
         // checkRightSource(lataaja.station.getForecastUrl(), html);
-        String shortHtml = html.substring(html.indexOf("short forecast meteogram"), html.indexOf("mid forecast meteogram"));
+        String shortHtml = html.substring(html.indexOf("short local-weather-forecast meteogram"), html.indexOf("mid local-weather-forecast meteogram"));
         ArrayList<Integer> shortColspans = getColspans(shortHtml);
         shortConds = getConds(shortHtml, shortColspans);
         GraphData graphData = new GraphData(html);

@@ -35,7 +35,7 @@ public class GraphData {
     }
 
     private void parseData(String html) {
-        int rangeStart = html.indexOf("long forecast graph");
+        int rangeStart = html.indexOf("long local-weather-forecast graph");
         String range = html.substring(rangeStart, html.indexOf("/script", rangeStart));
         getTemps(range);
         getCodes(range);
