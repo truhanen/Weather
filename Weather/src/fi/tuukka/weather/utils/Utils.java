@@ -166,15 +166,15 @@ public class Utils {
             b = 255;
         }
         else if (tempValue > -15 && tempValue <= -0) {
-            double c1 = 13.33;
-            double c2 = 200.0;
+            double c1 = 15.;
+            double c2 = 225.;
             r = (int) (c1 * tempValue + c2);
             g = 255;
             b = 255;
         }
         else if (tempValue >= 0 && tempValue < 15) {
-            double c1 = -13.33;
-            double c2 = 200.0;
+            double c1 = -14.;
+            double c2 = 210.0;
             r = 255;
             g = 255;
             b = (int) (c1 * tempValue + c2);
