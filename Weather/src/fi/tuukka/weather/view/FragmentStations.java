@@ -25,6 +25,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import fi.tuukka.weather.R;
+import fi.tuukka.weather.controller.ControllerInterface;
+import fi.tuukka.weather.controller.ControllerStations;
 import fi.tuukka.weather.utils.Station;
 import fi.tuukka.weather.utils.Utils;
 import android.app.Activity;
@@ -51,6 +53,7 @@ public class FragmentStations extends TabFragment {
     private TextView header;
     private static String query = null;
     private static String[] stationStrings = null;
+    private ControllerInterface controller = new ControllerStations();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -136,7 +139,7 @@ public class FragmentStations extends TabFragment {
     }
 
     public void refreshStations() {
-        Station chosen = Station.chosen();
+        Station chosen = Station.chosen(getActivity().getApplicationContext());
         listenCheck = false;
         ((ScrollView) view.findViewById(R.id.scrollView1)).scrollTo(0, 0);
         rg.clearCheck();
@@ -161,5 +164,15 @@ public class FragmentStations extends TabFragment {
     @Override
     public void makeIncomplete() {
         refreshStations();
+    }
+    
+    @Override
+    public int getTitleId() {
+        return R.string.asemat;
+    }
+
+    @Override
+    public ControllerInterface getController() {
+        return controller;
     }
 }

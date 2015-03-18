@@ -14,28 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package fi.tuukka.weather.model;
+package fi.tuukka.weather.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import android.content.Context;
 import android.graphics.Bitmap;
-import fi.tuukka.weather.model.downloader.RainDownloader;
-import fi.tuukka.weather.model.downloader.RainDownloader.RainType;
+import fi.tuukka.weather.downloader.RainDownloader;
+import fi.tuukka.weather.downloader.RainDownloader.RainType;
 
-public class ModelRain implements ModelInterface {
+public class ControllerRain implements ControllerInterface {
 
     @Override
-    public boolean isFinished() {
+    public boolean isFinished(Context context) {
         return RainDownloader.isAllDownloaded();
     }
 
     @Override
-    public void downloadNext() {
-        RainDownloader.downloadNext();
+    public void downloadNext(Context context) {
+        RainDownloader.downloadNext(context);
     }
 
-    public int rainsDownloaded() {
+    public List<Integer>[] rainsDownloaded() {
         return RainDownloader.rainsDownloaded();
+    }
+    
+    public boolean hasFreshHtml() {
+        return RainDownloader.hasFreshHtml();
     }
 
     public boolean hasRain(RainType rainType, int index) {

@@ -18,11 +18,14 @@ package fi.tuukka.weather.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
-import fi.tuukka.weather.model.downloader.Downloader;
-import fi.tuukka.weather.model.downloader.RainDownloader;
-import fi.tuukka.weather.model.downloader.RainDownloader.RainType;
+import fi.tuukka.weather.downloader.Downloader;
+import fi.tuukka.weather.downloader.RainDownloader;
+import fi.tuukka.weather.downloader.RainDownloader.RainType;
+import android.content.Context;
 import android.graphics.Bitmap;
 
 public class Rains {
@@ -49,11 +52,11 @@ public class Rains {
     }
 
     public long[] rainTimes() {
-        return rainTimes.clone();
+        return rainTimes.clone(); // TODO
     }
 
     public Bitmap[] rains() {
-        return rains.clone();
+        return rains.clone(); // TODO
     }
 
     public RainType type() {
@@ -78,24 +81,24 @@ public class Rains {
         return hasRains(0, type.steps - 1);
     }
 
-    public int rainsFinished() {
-        int n = 0;
+    public List<Integer> rainsDownloaded() {
+        ArrayList<Integer> downloaded = new ArrayList<Integer>();
         for (int i = 0; i < type.steps; i++)
             if (hasRain(i))
-                n++;
-        return n;
+                downloaded.add(i);
+        return downloaded;
     }
 
     /**
      * Download the next rain from the given range that has not yet been downloaded.
      */
-    public void downloadRain(int from, int to) throws Exception {
+    public void downloadRain(int from, int to, Context context) throws Exception {
         int add = 1;
         if (from > to)
             add = -1;
         for (int i = from; (i <= to || (i >= to && from > to)) && i <= type.steps; i += add) {
             if (!hasRain(i)) {
-                downloadRain(i);
+                downloadRain(i, context);
                 break;
             }
         }
@@ -104,11 +107,12 @@ public class Rains {
     /**
      * Only assign values to inUi[] and saved[] here, do not use them.
      */
-    public void downloadRain(int i) throws Exception {
+    public void downloadRain(int i, Context context) throws Exception {
         String fileName = getRainFileName(i);
-        if (Downloader.isRunAlone()) {
+        boolean onlyDownload = true; // set this if you do not want to save or load bitmap files
+        if (!onlyDownload && Downloader.isRunAlone()) {
             // save new if we do not have a valid file
-            if (isObsoleteFile(fileName) || !FileUtils.hasFile(fileName, Station.getContext())) {
+            if (isObsoleteFile(fileName) || !FileUtils.hasFile(fileName, context)) {
                 Bitmap bmp;
                 if (rains[i] != null) {
                     // System.out.println("rain from ui to file " + type + " " + Integer.toString(i) + " " + fileName);
@@ -117,7 +121,7 @@ public class Rains {
                     // System.out.println("rain from web to file " + type + " " + Integer.toString(i) + " " + fileName);
                     bmp = Utils.loadBitmapFromUrl(rainImageUrls[i]);
                 }
-                FileUtils.saveBitmap(fileName, bmp, Station.getContext());
+                FileUtils.saveBitmap(fileName, bmp, context);
                 Utils.recycle(rains, i);
             }
             if (rains[i] != null)
@@ -126,12 +130,12 @@ public class Rains {
             saved[i] = true;
         } else {
             if (rains[i] == null) {
-                if (!isObsoleteFile(fileName) && FileUtils.hasFile(fileName, Station.getContext())) {
-                    // System.out.println("rain from file to ui " + type + " " + Integer.toString(i) + " " + fileName);
-                    rains[i] = FileUtils.openBitmap(fileName, Station.getContext());
+                if (!onlyDownload && !isObsoleteFile(fileName) && FileUtils.hasFile(fileName, context)) {
+//                    System.out.println("rain from file to ui " + type + " " + Integer.toString(i) + " " + fileName);
+                    rains[i] = FileUtils.openBitmap(fileName, context);
                 }
-                else {
-                    // System.out.println("rain from web to ui " + type + " " + Integer.toString(i));
+                if (rains[i] == null) { // also in case the opened file was corrupt and returned null
+//                    System.out.println("rain from web to ui " + type + " " + Integer.toString(i));
                     rains[i] = Utils.loadBitmapFromUrl(rainImageUrls[i]);
                 }
                 if (rains[i] == null)
@@ -141,7 +145,7 @@ public class Rains {
         }
     }
 
-    public void downloadHtml() throws Exception {
+    public void downloadHtml(Context context) throws Exception {
         String rainHtml = Utils.downloadHtml(type.url);
         if (rainHtml == null) {
             throw new Exception();
@@ -151,7 +155,7 @@ public class Rains {
         rainImageUrls = getRainAddresses(rainHtml);
         syncBitmaps(rainTimes, oldTimes);
         htmlTime = System.currentTimeMillis();
-        removeOldFiles();
+        removeOldFiles(context);
         for (int i = 0; i < type.steps; i++) {
             inUi[i] = false;
             saved[i] = false;
@@ -226,10 +230,10 @@ public class Rains {
         return Long.parseLong(fileName.split("_")[2]);
     }
 
-    private void removeOldFiles() {
-        for (String fileName : FileUtils.getFileNames(FileUtils.RAINSTART, Station.getContext())) {
+    private void removeOldFiles(Context context) {
+        for (String fileName : FileUtils.getFileNames(FileUtils.RAINSTART, context)) {
             if (isObsoleteFile(fileName)) {
-                FileUtils.deleteFile(fileName, Station.getContext());
+                FileUtils.deleteFile(fileName, context);
             }
         }
     }

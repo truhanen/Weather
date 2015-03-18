@@ -16,7 +16,7 @@
  *******************************************************************************/
 package fi.tuukka.weather.utils;
 
-import fi.tuukka.weather.model.downloader.Downloader;
+import fi.tuukka.weather.downloader.Downloader;
 import fi.tuukka.weather.view.ActivityMain;
 import fi.tuukka.weather.view.FragmentHistory;
 import android.content.Context;
@@ -34,7 +34,6 @@ public class Station {
     public static final String STATIONIDKEY = "stationIdKey";
     public static final String STATIONIDDEFAULT = "101339";
 
-    private static Context context = null;
     private static Station chosen = null;
 
     private String kunta = null;
@@ -57,8 +56,7 @@ public class Station {
         setValues(osaJaKunta, id);
     }
 
-    public static void setPreferences(Context context2) {
-        context = context2;
+    public static void setPreferences(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(ActivityMain.PREFS_FILENAME, Context.MODE_PRIVATE);
         String kunta = prefs.getString(STATIONKUNTAKEY, STATIONKUNTADEFAULT);
         String osa = prefs.getString(STATIONOSAKEY, STATIONOSADEFAULT);
@@ -67,31 +65,29 @@ public class Station {
         chosen = new Station(kunta, osa, name, id);
     }
 
-    public static void saveChosen() {
+    public static void saveChosen(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(ActivityMain.PREFS_FILENAME, Context.MODE_PRIVATE);
-        prefs.edit().putString(STATIONKUNTAKEY, chosen().kunta).commit();
-        prefs.edit().putString(STATIONOSAKEY, chosen().osa).commit();
-        prefs.edit().putString(STATIONNAMEKEY, chosen().name).commit();
-        prefs.edit().putString(STATIONIDKEY, chosen().id).commit();
-    }
-
-    public static Context getContext() {
-        return context;
+        prefs.edit().putString(STATIONKUNTAKEY, chosen(context).kunta).commit();
+        prefs.edit().putString(STATIONOSAKEY, chosen(context).osa).commit();
+        prefs.edit().putString(STATIONNAMEKEY, chosen(context).name).commit();
+        prefs.edit().putString(STATIONIDKEY, chosen(context).id).commit();
     }
 
     public boolean hasFreshHtml() {
         return html != null && System.currentTimeMillis() - htmlTime < Downloader.HTMLEXPIREDTIME;
     }
 
-    public boolean isHistoriesFinished() {
+    public boolean isHistoriesFinished(Context context) {
         if (Downloader.isRunAlone())
-            return graphs.hasAllFreshSaved();
+            return graphs.hasAllFreshSaved(context);
         else {
             return graphs.hasAllFresh();
         }
     }
 
-    public static Station chosen() {
+    public static Station chosen(Context context) {
+        if (chosen == null)
+            setPreferences(context);
         return chosen;
     }
 
@@ -177,23 +173,23 @@ public class Station {
         return n;
     }
 
-    public void downloadNextHistory() {
+    public void downloadNextHistory(Context context) {
         if (html == null || !hasFreshHtml())
             downloadHtml();
         if (html == null)
             return;
         for (int i = 0; i < graphs.bmps.length; i++) {
-            if (downloadHistory(i))
+            if (downloadHistory(i, context))
                 break;
         }
     }
 
-    private boolean downloadHistory(int i) {
+    private boolean downloadHistory(int i, Context context) {
         boolean downloaded = false;
         try {
             String fileName = graphs.getHistoryFileName(i);
             Bitmap bmp = null;
-            if (graphs.isFreshFile(fileName))
+            if (graphs.isFreshFile(fileName, context))
                 bmp = FileUtils.openBitmap(fileName, context);
             if (Downloader.isRunAlone()) {
                 if (bmp == null) {
@@ -204,7 +200,7 @@ public class Station {
                         bmp = downloadHistoryBitmap(i);
                         // System.out.println("history from web to file");
                     }
-                    FileUtils.saveBitmap(fileName, bmp, Station.getContext());
+                    FileUtils.saveBitmap(fileName, bmp, context);
                     downloaded = true;
                 }
                 if (graphs.bmps[i] != null)
@@ -258,10 +254,10 @@ public class Station {
             return true;
         }
 
-        public boolean hasAllFreshSaved() {
+        public boolean hasAllFreshSaved(Context context) {
             for (int i = 0; i < bmps.length; i++) {
                 String fileName = getHistoryFileName(i);
-                if (!FileUtils.hasFile(fileName, getContext()) || !isFreshFile(fileName)) {
+                if (!FileUtils.hasFile(fileName, context) || !isFreshFile(fileName, context)) {
                     return false;
                 }
             }
@@ -272,8 +268,8 @@ public class Station {
             return System.currentTimeMillis() - times[i] < Downloader.EXPIREDTIME;
         }
 
-        public boolean isFreshFile(String filename) {
-            return System.currentTimeMillis() - FileUtils.lastModified(filename, getContext()) < Downloader.EXPIREDTIME;
+        public boolean isFreshFile(String filename, Context context) {
+            return System.currentTimeMillis() - FileUtils.lastModified(filename, context) < Downloader.EXPIREDTIME;
         }
     }
 

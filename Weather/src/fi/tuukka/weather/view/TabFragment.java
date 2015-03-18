@@ -16,6 +16,8 @@
  *******************************************************************************/
 package fi.tuukka.weather.view;
 
+import fi.tuukka.weather.R;
+import fi.tuukka.weather.controller.ControllerInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -49,4 +51,8 @@ public abstract class TabFragment extends Fragment {
         viewCreated = false;
         super.onDestroyView();
     }
+    
+    public abstract int getTitleId();
+    
+    public abstract ControllerInterface getController();
 }

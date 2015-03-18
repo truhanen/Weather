@@ -14,27 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package fi.tuukka.weather.model;
+package fi.tuukka.weather.controller;
 
-import fi.tuukka.weather.utils.Station;
+import android.content.Context;
 
-public class ModelCurrent implements ModelInterface {
+public interface ControllerInterface {
 
-    @Override
-    public boolean isFinished() {
-        return Station.chosen().hasFreshHtml();
-    }
+    /**
+     * @return false if something downloadable is still missing
+     */
+    public boolean isFinished(Context context);
 
-    @Override
-    public void downloadNext() {
-        Station.chosen().downloadHtml();
-    }
+    /**
+     * Download the next downloadable thing.
+     */
+    public void downloadNext(Context context);
 
-    public String getHtml() {
-        return Station.chosen().getHtml();
-    }
-
-    public String getStationName() {
-        return Station.chosen().getStationName();
-    }
 }

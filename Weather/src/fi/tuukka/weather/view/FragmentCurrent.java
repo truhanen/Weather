@@ -20,10 +20,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.model.ModelCurrent;
+import fi.tuukka.weather.controller.ControllerCurrent;
+import fi.tuukka.weather.controller.ControllerInterface;
 import fi.tuukka.weather.utils.Station;
 import fi.tuukka.weather.utils.Utils;
-import fi.tuukka.weather.view.ActivityMain.Frag;
+import fi.tuukka.weather.view.ActivityMain.Tab;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -41,7 +42,7 @@ public class FragmentCurrent extends TabFragment {
     private View view;
     private LinearLayout havaintoLayout;
     private TextView havaintoHeader;
-    private ModelCurrent model;
+    private ControllerCurrent controller = new ControllerCurrent();
     private final String[] searchLines = {
             "L&auml;mp&ouml;tila</span> <span class=\"parameter-value\">",
             "Kosteus</span> <span class=\"parameter-value\">",
@@ -72,14 +73,13 @@ public class FragmentCurrent extends TabFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.tuorein, container, false);
-        model = (ModelCurrent) Frag.CURRENT.model;
         havaintoLayout = (LinearLayout) view.findViewById(R.id.havaintoLayout);
         havaintoHeader = (TextView) view.findViewById(R.id.havaintoHeader);
         LinearLayout ennusteLayout = (LinearLayout) view.findViewById(R.id.ennusteLayout);
         TextView ennusteHeader = (TextView) view.findViewById(R.id.ennusteHeader);
         ennuste = new Forecast(this, ennusteLayout, ennusteHeader);
         makeCurrentIncomplete();
-        if (model.getHtml() != null) {
+        if (controller.getHtml(getActivity().getApplicationContext()) != null) {
             paivitaHavainto();
             paivitaEnnuste();
         }
@@ -88,7 +88,7 @@ public class FragmentCurrent extends TabFragment {
     }
 
     public void paivitaHavainto() {
-        String full = model.getHtml();
+        String full = controller.getHtml(getActivity().getApplicationContext());
         if (full == null)
             return;
         int start = full.indexOf("Havaintoasema:");
@@ -111,7 +111,7 @@ public class FragmentCurrent extends TabFragment {
     private void refreshTime() {
         String timeString = new SimpleDateFormat("HH:mm").format(new Date());
         TextView textView = (TextView) view.findViewById(R.id.havaintoHeader);
-        textView.setText("Havainto (" + timeString + " @ " + model.getStationName() + ")");
+        textView.setText("Havainto (" + timeString + " @ " + controller.getStationName(getActivity().getApplicationContext()) + ")");
     }
 
     private void viewVariables() {
@@ -178,5 +178,15 @@ public class FragmentCurrent extends TabFragment {
     @Override
     public void makeIncomplete() {
         makeCurrentIncomplete();
+    }
+    
+    @Override
+    public int getTitleId() {
+        return R.string.tuorein;
+    }
+
+    @Override
+    public ControllerInterface getController() {
+        return controller;
     }
 }

@@ -31,8 +31,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.R.id;
-import fi.tuukka.weather.R.layout;
 import android.app.Activity;
 import android.app.Dialog;
 import android.graphics.Bitmap;
@@ -40,7 +38,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.Window;

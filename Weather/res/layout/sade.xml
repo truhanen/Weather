@@ -1,45 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<fi.tuukka.weather.view.RainLayoutBackground
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@layout/sade"
+    android:id="@+id/rain_background"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:gravity="center">
+    android:orientation="vertical"
+	android:gravity="center_horizontal">
+	<TextView
+		android:id="@+id/textView1"
+		android:background="@color/black"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="TextView"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:textColor="#ffffff"
+		android:gravity="top">
+	</TextView>
 	<LinearLayout
-		android:id="@+id/sadeLayout"
-		android:orientation="vertical"
-		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:gravity="center_horizontal">
-		<TextView
-			android:id="@+id/textView1"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="TextView"
-			android:textAppearance="?android:attr/textAppearanceMedium"
-			android:textColor="#ffffff"
-			android:gravity="top"></TextView>
+		android:id="@+id/linearLayout2"
+		android:layout_width="match_parent"
+		android:orientation="vertical"
+		android:gravity="bottom">
 		<LinearLayout
-			android:layout_height="fill_parent"
-			android:id="@+id/linearLayout2"
+			android:layout_height="wrap_content"
+			android:id="@+id/linearLayout3"
 			android:layout_width="match_parent"
 			android:orientation="vertical"
-			android:gravity="bottom">
-			<LinearLayout
+			android:gravity="center">
+			<TextView
 				android:layout_height="wrap_content"
-				android:id="@+id/linearLayout3"
-				android:layout_width="match_parent"
-				android:orientation="vertical"
-				android:gravity="center">
-				<TextView
-					android:layout_height="wrap_content"
-					android:text="TextView"
-					android:textAppearance="?android:attr/textAppearanceSmall"
-					android:layout_width="wrap_content"
-					android:textColor="#ffffff"
-					android:id="@+id/textView2"></TextView>
-			</LinearLayout>
+				android:text="TextView"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:layout_width="wrap_content"
+				android:textColor="#ffffff"
+                   android:background="@color/black"
+				android:id="@+id/textView2">
+			</TextView>
 		</LinearLayout>
 	</LinearLayout>
-
-</LinearLayout>
+</fi.tuukka.weather.view.RainLayoutBackground>

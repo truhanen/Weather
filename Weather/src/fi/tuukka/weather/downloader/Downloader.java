@@ -14,24 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package fi.tuukka.weather.model.downloader;
+package fi.tuukka.weather.downloader;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import fi.tuukka.weather.model.ModelCurrent;
-import fi.tuukka.weather.model.ModelHistory;
-import fi.tuukka.weather.model.ModelInterface;
-import fi.tuukka.weather.model.ModelRain;
-import fi.tuukka.weather.model.ModelStations;
-import fi.tuukka.weather.model.ModelWarnings;
+import fi.tuukka.weather.controller.ControllerCurrent;
+import fi.tuukka.weather.controller.ControllerHistory;
+import fi.tuukka.weather.controller.ControllerInterface;
+import fi.tuukka.weather.controller.ControllerRain;
+import fi.tuukka.weather.controller.ControllerStations;
+import fi.tuukka.weather.controller.ControllerWarnings;
 import fi.tuukka.weather.utils.Station;
 import fi.tuukka.weather.view.ActivityMain;
 import fi.tuukka.weather.view.FragmentStations;
 import fi.tuukka.weather.view.FragmentWarnings;
-import fi.tuukka.weather.view.ActivityMain.Frag;
+import fi.tuukka.weather.view.ActivityMain.Tab;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
@@ -48,9 +49,9 @@ public class Downloader extends Service {
     private final DownloaderRunnable downloaderRunnable = new DownloaderRunnable(new DownloaderHandler());
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final DownloaderBinder downloaderBinder = new DownloaderBinder();
-    private Frag currentTab = ActivityMain.FIRSTTAB;
-    private ArrayList<Frag> finishedTabs = new ArrayList<Frag>();
-    private DownloaderInterface downloaderIterface;
+    private Tab currentTab = ActivityMain.FIRSTTAB;
+    private ArrayList<Tab> finishedTabs = new ArrayList<Tab>();
+    private DownloaderInterface downloaderInterface;
     private boolean errorAlreadySent = false;
     private boolean downloading = false;
 
@@ -62,8 +63,6 @@ public class Downloader extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (Station.chosen() == null)
-            Station.setPreferences(this);
         downloadAll();
         // final ScheduledFuture downloaderHandle = scheduler.scheduleAtFixedRate(downloader, 0, 15, TimeUnit.SECONDS);
         // Runnable cancel = new Runnable() {
@@ -84,7 +83,7 @@ public class Downloader extends Service {
         return runAlone;
     }
 
-    public void download(Frag tab) {
+    public void download(Tab tab) {
         makeIncomplete(tab);
         scheduler.execute(downloaderRunnable);
     }
@@ -102,18 +101,18 @@ public class Downloader extends Service {
     }
 
     private boolean isFinished() {
-        return finishedTabs.size() == Frag.values().length;
+        return finishedTabs.size() == Tab.values().length;
     }
 
     private void makeIncompleteAll() {
-        for (Frag tab : Frag.values())
+        for (Tab tab : Tab.values())
             makeIncomplete(tab);
     }
 
-    private void makeIncomplete(Frag tab) {
-        finishedTabs.remove(tab);
-        if (downloaderIterface != null && !tab.model.isFinished())
-            downloaderIterface.makeIncomplete(tab);
+    private void makeIncomplete(Tab frag) {
+        finishedTabs.remove(frag);
+        if (downloaderInterface != null && !frag.frag.getController().isFinished(getApplicationContext()))
+            downloaderInterface.makeIncomplete(frag);
         errorAlreadySent = false;
     }
 
@@ -127,19 +126,21 @@ public class Downloader extends Service {
         public void run() {
             downloading = true;
             int i = 0;
+            Context context = getApplicationContext();
             while (!isFinished()) {
                 System.out.println(i++);
                 if (i > 60)
                     break;
-                for (Frag frag : Frag.values()) {
-                    if (!finishedTabs.contains(frag) && (currentTab == frag || finishedTabs.contains(currentTab))) {
-                        System.out.println(frag.name());
-                        if (!frag.model.isFinished()) {
-                            frag.model.downloadNext();
+                for (Tab tab : Tab.values()) {
+                    if (!finishedTabs.contains(tab) && (currentTab == tab || finishedTabs.contains(currentTab))) {
+//                        System.out.println(tab.name());
+                        ControllerInterface controller = tab.frag.getController();
+                        if (!controller.isFinished(context)) {
+                            controller.downloadNext(context);
                         }
-                        handler.sendEmptyMessage(frag.ordinal());
-                        if (frag.model.isFinished()) {
-                            finishedTabs.add(frag);
+                        handler.sendEmptyMessage(tab.ordinal());
+                        if (controller.isFinished(context)) {
+                            finishedTabs.add(tab);
                         }
                     }
                 }
@@ -158,15 +159,15 @@ public class Downloader extends Service {
                 errorAlreadySent = true;
                 return;
             }
-            if (downloaderIterface != null && !runAlone) {
-                downloaderIterface.refresh(Frag.values()[tabN]);
+            if (downloaderInterface != null && !runAlone) {
+                downloaderInterface.refresh(Tab.values()[tabN]);
             }
         }
     }
 
     public class DownloaderBinder extends Binder {
         public void addInterface(DownloaderInterface di) {
-            downloaderIterface = di;
+            downloaderInterface = di;
         }
 
         public void queryStations() {
@@ -175,16 +176,16 @@ public class Downloader extends Service {
 
         public void changeStation(Station station) {
             Station.setChosen(station);
-            Station.saveChosen();
-            download(Frag.CURRENT);
-            download(Frag.HISTORY);
+            Station.saveChosen(getApplicationContext());
+            download(Tab.CURRENT);
+            download(Tab.HISTORY);
         }
 
-        public void tabChanged(Frag tab2) {
+        public void tabChanged(Tab tab2) {
             currentTab = tab2;
         }
 
-        public void refresh(Frag tab) {
+        public void refresh(Tab tab) {
             download(tab);
         }
 
@@ -204,8 +205,8 @@ public class Downloader extends Service {
     }
 
     public static interface DownloaderInterface {
-        void refresh(Frag tab);
+        void refresh(Tab tab);
 
-        void makeIncomplete(Frag tab);
+        void makeIncomplete(Tab tab);
     }
 }

@@ -23,11 +23,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.model.ModelCurrent;
-import fi.tuukka.weather.model.ModelHistory;
+import fi.tuukka.weather.controller.ControllerCurrent;
+import fi.tuukka.weather.controller.ControllerHistory;
+import fi.tuukka.weather.controller.ControllerInterface;
 import fi.tuukka.weather.utils.Station;
 import fi.tuukka.weather.utils.Utils;
-import fi.tuukka.weather.view.ActivityMain.Frag;
+import fi.tuukka.weather.view.ActivityMain.Tab;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -47,7 +48,7 @@ public class FragmentHistory extends TabFragment {
     private TextView textView;
     private LinearLayout root;
     private View view;
-    private ModelHistory model;
+    private ControllerHistory controller = new ControllerHistory();
     public static final String[] historyParameterIds = {
             "4", // L�mp�tila
             "13", // Kosteus
@@ -67,11 +68,10 @@ public class FragmentHistory extends TabFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.grid, container, false);
-        model = (ModelHistory) Frag.HISTORY.model;
         textView = (TextView) view.findViewById(R.id.TextView08);
         root = (LinearLayout) view.findViewById(R.id.linearLayout12);
         makeHistoryIncomplete();
-        if (model.getHistoryGraphs() != null)
+        if (controller.getHistoryGraphs(getActivity().getApplicationContext()) != null)
             refreshGraphs();
         super.onCreateView(inflater, container, savedInstanceState);
         return view;
@@ -79,7 +79,7 @@ public class FragmentHistory extends TabFragment {
 
     public void refreshGraphs() {
         final Activity activity = getActivity();
-        final Bitmap[] graphs = model.getHistoryGraphs();
+        final Bitmap[] graphs = controller.getHistoryGraphs(getActivity().getApplicationContext());
         if (graphs == null) {
             refreshTime();
             return;
@@ -131,11 +131,11 @@ public class FragmentHistory extends TabFragment {
     }
 
     private void refreshTime() {
-        if (!model.isFinished())
-            textView.setText("Ladataan... " + Integer.toString(model.historiesDownloaded()) + "/" + Integer.toString(model.totalHistories()));
+        if (!controller.isFinished(getActivity().getApplicationContext()))
+            textView.setText("Ladataan... " + Integer.toString(controller.historiesDownloaded(getActivity().getApplicationContext())) + "/" + Integer.toString(controller.totalHistories(getActivity().getApplicationContext())));
         else {
             String timeString = new SimpleDateFormat("HH:mm").format(new Date());
-            textView.setText(timeString + " @ " + model.getStationName());
+            textView.setText(timeString + " @ " + controller.getStationName(getActivity().getApplicationContext()));
         }
     }
 
@@ -154,5 +154,15 @@ public class FragmentHistory extends TabFragment {
     @Override
     public void makeIncomplete() {
         makeHistoryIncomplete();
+    }
+    
+    @Override
+    public int getTitleId() {
+        return R.string.historia;
+    }
+
+    @Override
+    public ControllerInterface getController() {
+        return controller;
     }
 }

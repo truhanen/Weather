@@ -23,7 +23,7 @@
 			</intent-filter>
 		</activity>
 		<service
-		    android:name="fi.tuukka.weather.model.downloader.Downloader"
+		    android:name="fi.tuukka.weather.downloader.Downloader"
             android:theme="@style/Theme.AppCompat"/>
 	</application>
 </manifest>

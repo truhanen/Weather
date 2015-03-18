@@ -17,15 +17,15 @@
 package fi.tuukka.weather.view;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.model.ModelCurrent;
-import fi.tuukka.weather.model.ModelHistory;
-import fi.tuukka.weather.model.ModelInterface;
-import fi.tuukka.weather.model.ModelRain;
-import fi.tuukka.weather.model.ModelStations;
-import fi.tuukka.weather.model.ModelWarnings;
-import fi.tuukka.weather.model.downloader.Downloader;
-import fi.tuukka.weather.model.downloader.Downloader.DownloaderBinder;
-import fi.tuukka.weather.model.downloader.Downloader.DownloaderInterface;
+import fi.tuukka.weather.controller.ControllerCurrent;
+import fi.tuukka.weather.controller.ControllerHistory;
+import fi.tuukka.weather.controller.ControllerInterface;
+import fi.tuukka.weather.controller.ControllerRain;
+import fi.tuukka.weather.controller.ControllerStations;
+import fi.tuukka.weather.controller.ControllerWarnings;
+import fi.tuukka.weather.downloader.Downloader;
+import fi.tuukka.weather.downloader.Downloader.DownloaderBinder;
+import fi.tuukka.weather.downloader.Downloader.DownloaderInterface;
 import fi.tuukka.weather.utils.Station;
 import android.content.ComponentName;
 import android.content.Context;
@@ -45,25 +45,25 @@ import android.view.MenuItem;
 public class ActivityMain extends FragmentActivity {
 
     public static final String PREFS_FILENAME = "weatherprefs";
-    public static final Frag FIRSTTAB = Frag.CURRENT;
+    public static final Tab FIRSTTAB = Tab.CURRENT;
     private DownloaderBinder downloaderBinder;
     private ViewPager viewPager;
     private WeatherFragmentPagerAdapter pagerAdapter;
 
-    public static enum Frag {
-        CURRENT(new ModelCurrent(), new FragmentCurrent(), R.string.tuorein),
-        RAIN(new ModelRain(), new FragmentRain(), R.string.sadealueet),
-        HISTORY(new ModelHistory(), new FragmentHistory(), R.string.historia),
-        WARNINGS(new ModelWarnings(), new FragmentWarnings(), R.string.varoitukset),
-        STATIONS(new ModelStations(), new FragmentStations(), R.string.asemat);
-        public TabFragment tab;
-        public ModelInterface model;
-        public int titleId;
+    /**
+     * All tabs and their fragments.
+     */
+    public static enum Tab {
+        CURRENT(new FragmentCurrent()),
+        RAIN(new FragmentRain()),
+        HISTORY(new FragmentHistory()),
+        WARNINGS(new FragmentWarnings()),
+        STATIONS(new FragmentStations());
+        
+        public TabFragment frag;
 
-        Frag(ModelInterface model, TabFragment tab, int titleId) {
-            this.titleId = titleId;
-            this.tab = tab;
-            this.model = model;
+        Tab(TabFragment frag) {
+            this.frag = frag;
         }
     }
 
@@ -83,15 +83,15 @@ public class ActivityMain extends FragmentActivity {
             downloaderBinder = (DownloaderBinder) service;
             downloaderBinder.addInterface(new DownloaderInterface() {
                 @Override
-                public void refresh(Frag tab) {
-                    if (tab.tab.isViewCreated())
-                        tab.tab.refresh();
+                public void refresh(Tab tab) {
+                    if (tab.frag.isViewCreated())
+                        tab.frag.refresh();
                 }
 
                 @Override
-                public void makeIncomplete(Frag tab) {
-                    if (tab.tab.isViewCreated())
-                        tab.tab.makeIncomplete();
+                public void makeIncomplete(Tab tab) {
+                    if (tab.frag.isViewCreated())
+                        tab.frag.makeIncomplete();
                 }
                 // @Override
                 // public boolean isFinished(Frag tab) {
@@ -132,7 +132,7 @@ public class ActivityMain extends FragmentActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Frag tab = Frag.values()[viewPager.getCurrentItem()];
+        Tab tab = Tab.values()[viewPager.getCurrentItem()];
         switch (item.getItemId()) {
         case R.id.refresh:
             if (downloaderBinder != null)
@@ -140,7 +140,7 @@ public class ActivityMain extends FragmentActivity {
             return true;
         case R.id.refreshAll:
             if (downloaderBinder != null)
-                downloaderBinder.refresh(tab); // TODO wrong
+                downloaderBinder.refresh(tab); // TODO wrong, should refresh all
             return true;
         default:
             return super.onOptionsItemSelected(item);
@@ -154,16 +154,16 @@ public class ActivityMain extends FragmentActivity {
 
         @Override
         public Fragment getItem(int arg0) {
-            return (Fragment) Frag.values()[arg0].tab;
+            return (Fragment) Tab.values()[arg0].frag;
         }
 
         @Override
         public int getCount() {
-            return Frag.values().length;
+            return Tab.values().length;
         }
 
         public String getPageTitle(int i) {
-            return getString(Frag.values()[i].titleId);
+            return getString(Tab.values()[i].frag.getTitleId());
         }
     }
 }

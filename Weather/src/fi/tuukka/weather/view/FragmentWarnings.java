@@ -17,9 +17,10 @@
 package fi.tuukka.weather.view;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.model.ModelWarnings;
+import fi.tuukka.weather.controller.ControllerInterface;
+import fi.tuukka.weather.controller.ControllerWarnings;
 import fi.tuukka.weather.utils.Utils;
-import fi.tuukka.weather.view.ActivityMain.Frag;
+import fi.tuukka.weather.view.ActivityMain.Tab;
 import android.app.Activity;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -33,15 +34,14 @@ public class FragmentWarnings extends TabFragment {
 
     LinearLayout layout;
     private View view;
-    private ModelWarnings model;
+    private ControllerWarnings controller = new ControllerWarnings();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.varoitukset, container, false);
-        model = (ModelWarnings) Frag.WARNINGS.model;
         layout = (LinearLayout) view.findViewById(R.id.varoitusLayout);
         makeButtonWork();
-        if (model.warnings() != null)
+        if (controller.warnings() != null)
             refresh();
         super.onCreateView(inflater, container, savedInstanceState);
         return view;
@@ -58,12 +58,22 @@ public class FragmentWarnings extends TabFragment {
 
     @Override
     public void refresh() {
-        if (model.warnings() != null)
-            Utils.setBackGroundDrawable(getActivity(), layout, model.warnings());
+        if (controller.warnings() != null)
+            Utils.setBackGroundDrawable(getActivity(), layout, controller.warnings());
     }
 
     @Override
     public void makeIncomplete() {
         layout.setBackgroundColor(Color.BLACK);
+    }
+    
+    @Override
+    public int getTitleId() {
+        return R.string.varoitukset;
+    }
+
+    @Override
+    public ControllerInterface getController() {
+        return controller;
     }
 }

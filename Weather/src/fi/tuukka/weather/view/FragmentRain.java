@@ -19,13 +19,16 @@ package fi.tuukka.weather.view;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import fi.tuukka.weather.R;
-import fi.tuukka.weather.model.ModelCurrent;
-import fi.tuukka.weather.model.ModelRain;
-import fi.tuukka.weather.model.downloader.RainDownloader;
-import fi.tuukka.weather.model.downloader.RainDownloader.RainType;
-import fi.tuukka.weather.view.ActivityMain.Frag;
+import fi.tuukka.weather.controller.ControllerCurrent;
+import fi.tuukka.weather.controller.ControllerInterface;
+import fi.tuukka.weather.controller.ControllerRain;
+import fi.tuukka.weather.downloader.RainDownloader;
+import fi.tuukka.weather.downloader.RainDownloader.RainType;
+import fi.tuukka.weather.view.ActivityMain.Tab;
+import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -33,6 +36,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -41,36 +45,57 @@ public class FragmentRain extends TabFragment {
     private View view;
     TextView textView1;
     TextView textView2;
-    private ModelRain model;
-    private LinearLayout sadeLayout;
-    private boolean firstRainShown = false;
-    private boolean limitsInitialized = false;
-    private int[] touchLimits;
-    private RainType[] rainType;
-    private int[] rainInd;
+    private RainLayoutBackground sadeLayout;
+    private ControllerRain controller = new ControllerRain();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.sade, container, false);
-        model = (ModelRain) Frag.RAIN.model;
-        sadeLayout = (LinearLayout) view.findViewById(R.id.sadeLayout);
-        setTextViewBackgroundColor();
-        onTouchProcess();
-        makeRainIncomplete();
-        paivita();
+        sadeLayout = (RainLayoutBackground) view.findViewById(R.id.rain_background);
+        sadeLayout.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                sadeLayout.chooseImage(event.getY(), controller);
+                return true;
+            }
+        });
+        sadeLayout.setFragmentRainInterface(new FragmentRainInterface() {
+            @Override
+            public void setLabel(RainType type, int index) {
+                setTimeLabel(type, index);
+            }
+        });
         super.onCreateView(inflater, container, savedInstanceState);
+        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                makeRainIncomplete();
+                paivita();
+            }
+        });
         return view;
     }
 
     public void paivita() { // ks. latausjärjestys @ Lataaja.downloadRains()
-        if (!firstRainShown)
-            setImage(RainType.MIN15, RainType.MIN15.steps - 1);
-        refreshTime();
+        if (!controller.hasRain(RainType.MIN15, RainType.MIN15.steps - 1)) {
+            System.out.println("no rainmap");
+            return;
+        }
+        if (!controller.hasFreshHtml()) {
+            System.out.println("no html");
+            return;
+        }
+        if (!sadeLayout.firstRainShown())
+            sadeLayout.setImage(RainType.MIN15, RainType.MIN15.steps - 1, controller);
+        List<Integer>[] rainsDownloaded = controller.rainsDownloaded();
+        refreshTime(rainsDownloaded);
+        sadeLayout.setFinishedBars(rainsDownloaded, controller);
     }
 
-    private void refreshTime() {
-        if (!model.isFinished())
-            textView2.setText("Ladataan... " + Integer.toString(model.rainsDownloaded()) + "/" + Integer.toString(RainType.MIN15.steps + RainType.H1.steps));
+    private void refreshTime(List<Integer>[] rainsDownloaded) {
+        if (!controller.isFinished(getActivity().getApplicationContext()))
+            textView2.setText("Ladataan... " + Integer.toString(rainsDownloaded[0].size() + rainsDownloaded[1].size())
+                    + "/" + Integer.toString(RainType.MIN15.steps + RainType.H1.steps));
         else {
             String timeString = new SimpleDateFormat("HH:mm").format(new Date());
             textView2.setText(" Päivitetty klo " + timeString + " ");
@@ -84,25 +109,12 @@ public class FragmentRain extends TabFragment {
         textView2.setText("");
         if (sadeLayout != null)
             sadeLayout.setBackgroundColor(Color.BLACK);
-        firstRainShown = false;
-        refreshTime();
+        sadeLayout.setFirstRainShown(false);
+        paivita();
     }
 
-    private void setTextViewBackgroundColor() {
-        view.findViewById(R.id.textView1).setBackgroundColor(getResources().getColor(R.color.black));
-        view.findViewById(R.id.textView2).setBackgroundColor(getResources().getColor(R.color.black));
-    }
-
-    private void setImage(RainType rainType, int index) {
-        if (!model.hasRain(rainType, index))
-            return;
-        sadeLayout.setBackgroundDrawable(new BitmapDrawable(getResources(), model.getRain(rainType, index)));
-        firstRainShown = true;
-        setLabel(rainType, index);
-    }
-
-    private void setLabel(RainType rainType, int index) {
-        Date endDate = model.getTime(rainType, index);
+    public void setTimeLabel(RainType rainType, int index) {
+        Date endDate = controller.getTime(rainType, index);
         SimpleDateFormat formatter = new SimpleDateFormat("d.M. HH:mm");
         SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
         StringBuilder sb = new StringBuilder();
@@ -117,70 +129,6 @@ public class FragmentRain extends TabFragment {
         textView1.setText(sb);
     }
 
-    private void onTouchProcess() {
-        sadeLayout.setOnTouchListener(new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-                chooseImage(event.getY());
-                return true;
-            }
-        });
-    }
-
-    private void initializeLimits() {
-        Date first15minTime = model.getTime(RainType.MIN15, 0);
-        ArrayList<RainType> rainType2 = new ArrayList<RainType>();
-        ArrayList<Integer> rainInd2 = new ArrayList<Integer>();
-        ArrayList<Integer> mins = new ArrayList<Integer>();
-        int summins = 0;
-        for (int i = 0; first15minTime.after(model.getTime(RainType.H1, i)) && i < RainType.H1.steps; i++) {
-            rainType2.add(RainType.H1);
-            rainInd2.add(i);
-            mins.add(60);
-            summins += 60;
-        }
-        for (int i = 0; i < RainType.MIN15.steps; i++) {
-            rainType2.add(RainType.MIN15);
-            rainInd2.add(i);
-            mins.add(15);
-            summins += 15;
-        }
-        for (int i = RainDownloader.FIRSTFORECASTIND; i < RainType.H1.steps; i++) {
-            rainType2.add(RainType.H1);
-            rainInd2.add(i);
-            mins.add(60);
-            summins += 60;
-        }
-        // set touchLimits
-        int height = sadeLayout.getHeight();
-        ArrayList<Integer> touchLimits2 = new ArrayList<Integer>();
-        touchLimits2.add(0);
-        for (int i = 0; i < mins.size(); i++) {
-            touchLimits2.add((int) (touchLimits2.get(i) + height * mins.get(i) * 1.0 / summins));
-        }
-        touchLimits = new int[touchLimits2.size()];
-        touchLimits[0] = 0;
-        rainType = new RainType[rainType2.size()];
-        rainInd = new int[rainInd2.size()];
-        for (int i = 0; i < rainType.length; i++) {
-            rainType[i] = rainType2.get(i);
-            rainInd[i] = rainInd2.get(i);
-            touchLimits[i + 1] = touchLimits2.get(i + 1);
-        }
-
-        limitsInitialized = true;
-    }
-
-    protected void chooseImage(float y) {
-        if (!limitsInitialized)
-            initializeLimits();
-        for (int i = 0; i < touchLimits.length - 1; i++) {
-            if (y >= touchLimits[i] && y <= touchLimits[i + 1]) {
-                setImage(rainType[i], rainInd[i]);
-                break;
-            }
-        }
-    }
-
     @Override
     public void refresh() {
         paivita();
@@ -189,5 +137,19 @@ public class FragmentRain extends TabFragment {
     @Override
     public void makeIncomplete() {
         makeRainIncomplete();
+    }
+    
+    @Override
+    public int getTitleId() {
+        return R.string.sadealueet;
+    }
+
+    @Override
+    public ControllerInterface getController() {
+        return controller;
+    }
+    
+    public interface FragmentRainInterface {
+        public void setLabel(RainType type, int index);
     }
 }

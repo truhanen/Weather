@@ -14,38 +14,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package fi.tuukka.weather.model;
+package fi.tuukka.weather.controller;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import fi.tuukka.weather.utils.Station;
 import fi.tuukka.weather.view.FragmentHistory;
 
-public class ModelHistory implements ModelInterface {
+public class ControllerHistory implements ControllerInterface {
 
     @Override
-    public boolean isFinished() {
-        return Station.chosen().isHistoriesFinished();
+    public boolean isFinished(Context context) {
+        return Station.chosen(context).isHistoriesFinished(context);
     }
 
     @Override
-    public void downloadNext() {
-        Station.chosen().downloadNextHistory();
+    public void downloadNext(Context context) {
+        Station.chosen(context).downloadNextHistory(context);
     }
 
-    public Bitmap[] getHistoryGraphs() {
-        return Station.chosen().getHistoryGraphs();
+    public Bitmap[] getHistoryGraphs(Context context) {
+        return Station.chosen(context).getHistoryGraphs();
     }
 
-    public int historiesDownloaded() {
-        return Station.chosen().historiesDownloaded();
+    public int historiesDownloaded(Context context) {
+        return Station.chosen(context).historiesDownloaded();
     }
 
-    public int totalHistories() {
-        return Station.chosen().getHistoryGraphs().length;
+    public int totalHistories(Context context) {
+        return Station.chosen(context).getHistoryGraphs().length;
     }
 
-    public String getStationName() {
-        return Station.chosen().getStationName();
+    public String getStationName(Context context) {
+        return Station.chosen(context).getStationName();
     }
 
 }

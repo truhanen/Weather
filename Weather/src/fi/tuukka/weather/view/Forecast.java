@@ -51,7 +51,7 @@ public class Forecast {
     }
 
     public void paivita() {
-        String html = Station.chosen().getHtml();
+        String html = Station.chosen(tuorein.getActivity().getApplicationContext()).getHtml();
         // checkRightSource(lataaja.station.getForecastUrl(), html);
         String shortHtml = html.substring(html.indexOf("short local-weather-forecast meteogram"), html.indexOf("mid local-weather-forecast meteogram"));
         ArrayList<Integer> shortColspans = getColspans(shortHtml);
@@ -108,7 +108,8 @@ public class Forecast {
 
     private void refreshTime() {
         String timeString = new SimpleDateFormat("HH:mm").format(new Date());
-        ennusteHeader.setText("Ennuste (" + timeString + " @ " + Station.chosen().getForecastPlaceName() + ")");
+        ennusteHeader.setText("Ennuste (" + timeString + " @ "
+                              + Station.chosen(tuorein.getActivity().getApplicationContext()).getForecastPlaceName() + ")");
     }
 
     private ArrayList<Integer> getColspans(String html) {

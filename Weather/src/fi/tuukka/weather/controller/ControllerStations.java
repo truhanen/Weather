@@ -14,30 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package fi.tuukka.weather.model;
+package fi.tuukka.weather.controller;
 
-import android.graphics.Bitmap;
-import fi.tuukka.weather.model.downloader.Downloader;
-import fi.tuukka.weather.utils.Utils;
+import android.content.Context;
+import fi.tuukka.weather.view.FragmentStations;
 
-public class ModelWarnings implements ModelInterface {
+public class ControllerStations implements ControllerInterface {
 
-    private static final String URLWARNIGNS = "http://cdn.fmi.fi/weather-warnings/products/weather-warning-map-1d-fi.gif";
-    private static Bitmap warnings = null;
-    private static long warningsTime = 0l;
-
-    public Bitmap warnings() {
-        return warnings;
+    @Override
+    public boolean isFinished(Context context) {
+        return FragmentStations.isReady();
     }
 
     @Override
-    public boolean isFinished() {
-        return warnings != null && System.currentTimeMillis() - warningsTime < Downloader.EXPIREDTIME;
-    }
-
-    @Override
-    public void downloadNext() {
-        warnings = Utils.loadBitmapFromUrl(URLWARNIGNS);
+    public void downloadNext(Context context) {
+        FragmentStations.downloadStations();
     }
 
 }
