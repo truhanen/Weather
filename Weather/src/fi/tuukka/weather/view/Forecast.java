@@ -165,7 +165,7 @@ public class Forecast {
         String range = html.substring(html.indexOf("meteogram-temperatures"), html.indexOf("meteogram-wind-symbols"));
         int index = 0;
         while ((index = range.indexOf("tila", index + 1)) != -1) {
-            temps.add(Integer.parseInt(range.substring(index + 5, range.indexOf(" °C", index))));
+            temps.add(Integer.parseInt(range.substring(index + 5, range.indexOf("°C", index) - 1)));
         }
         return temps;
     }
@@ -175,7 +175,7 @@ public class Forecast {
         String range = html.substring(html.indexOf("meteogram-hourly-precipitation-values"), html.indexOf("</tbody> </table> </div>"));
         int index = 0;
         while ((index = range.indexOf("title", index + 1)) != -1) {
-            String rain = range.substring(index + 34, range.indexOf(" mm", index));
+            String rain = range.substring(index + 34, range.indexOf("mm", index) - 1);
             rains.add(Float.parseFloat(rain.replace(',', '.')));
         }
         return rains;
